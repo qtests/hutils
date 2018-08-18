@@ -3,6 +3,8 @@
   (
       ini
     , Parser (..)
+    -- , INI (..)
+    , lookupSectionVariable
   )
   where
 
@@ -16,6 +18,7 @@ import Data.Char
   
 type Variables = Map String String
 type Sections = Map String Variables
+
 newtype INI = INI Sections deriving Show
   
 data Parser a = Parser { runParser :: String -> Maybe (a, String) }
@@ -87,7 +90,7 @@ conditional f =
     in Parser parsefunc
 
   
-  --- Parsing Functions -----------------------------------
+--- Parsing Functions -----------------------------------
 
 char :: Char -> Parser Char
 char c = conditional (== c) 
@@ -108,6 +111,12 @@ bracketClose = char ']'
 alphanum :: Parser Char
 alphanum = conditional isAlphaNum
 
+isAlphaNumExt :: Char -> Bool
+isAlphaNumExt x = (isAlphaNum x) || ('_' == x) || ('-' == x)
+
+alphanumExt :: Parser Char
+alphanumExt = conditional isAlphaNumExt
+
 isWhiteSpace :: Char -> Bool
 isWhiteSpace ' ' = True
 isWhiteSpace '\t' = True
@@ -126,13 +135,13 @@ sectionHeader :: Parser String
 sectionHeader = bracketed bracketOpen sectionName bracketClose
 
 name :: Parser String
-name = (some alphanum)
+name = (some alphanumExt)
 
 quote :: Parser Char
 quote = char '\"'
 
 quotedchar :: Parser Char
-quotedchar = conditional (\c -> isAlphaNum c || isWhiteSpace c)
+quotedchar = conditional (\c -> isAlphaNumExt c || isWhiteSpace c)
 
 quotedvalue :: Parser String
 quotedvalue = bracketed quote (many quotedchar) quote
@@ -176,3 +185,14 @@ section = do
 
 ini :: Parser INI
 ini = (INI . fromList) <$> many section
+
+--- Processing Functions -----------------------------------
+
+lookupSectionVariable :: INI -> String -> String -> Maybe String
+lookupSectionVariable ini secName secVariable = variableValue
+  where
+    (INI sections) = ini
+    variableValue = do 
+      asection <- Data.Map.lookup secName sections 
+      Data.Map.lookup secVariable asection 
+

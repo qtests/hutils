@@ -10,5 +10,7 @@ module Main where
     args <- getArgs
     contents <- readFile (head args)
     case runParser ini contents of
-      Just inicontents -> print inicontents
+      Just inicontents -> do print inicontents
+                             print $ lookupSectionVariable (fst inicontents) "TimeSeries" "startdate"
+                          
       Nothing          -> putStrLn "Could not parse INI file"
