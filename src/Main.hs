@@ -2,6 +2,7 @@ module Main where
 
   import System.IO
   import System.Environment
+  import Data.Maybe 
 
   import Parsers.INIParser
   
@@ -11,6 +12,8 @@ module Main where
     contents <- readFile (head args)
     case runParser ini contents of
       Just inicontents -> do print inicontents
-                             print $ lookupSectionVariable (fst inicontents) "TimeSeries" "startdate"
+                             do 
+                                 let d = fromMaybe "2000-01-01" $ lookupSectionVariable (fst inicontents) "TimeSeries" "startdate"
+                                 print $ read2UTCTime "%Y-%m-%d" d
                           
       Nothing          -> putStrLn "Could not parse INI file"

@@ -5,6 +5,7 @@
     , Parser (..)
     -- , INI (..)
     , lookupSectionVariable
+    , read2UTCTime
   )
   where
 
@@ -12,8 +13,10 @@
 import Data.Functor
 import Control.Applicative
 import Control.Monad
+
 import Data.Map hiding (empty)
 import Data.Char
+import Data.Time
 
   
 type Variables = Map String String
@@ -187,6 +190,10 @@ ini :: Parser INI
 ini = (INI . fromList) <$> many section
 
 --- Processing Functions -----------------------------------
+
+read2UTCTime :: String -> String -> Maybe UTCTime
+read2UTCTime format x = parseTimeM True defaultTimeLocale format x :: Maybe UTCTime
+
 
 lookupSectionVariable :: INI -> String -> String -> Maybe String
 lookupSectionVariable ini secName secVariable = variableValue
